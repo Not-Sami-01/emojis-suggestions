@@ -22,7 +22,7 @@
   "build": {
     "appId": "io.github.emoji-suggestions-bar",
     "productName": "Emoji Suggestions",
-    "icon": "build/icon.png",
+    "icon": "build/icon.svg",
     "asar": true,
     "files": [
       "main.js",

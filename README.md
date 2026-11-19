@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.svg" alt="Emoji Suggestions" width="420">
+</p>
+
 # Emoji Suggestions Bar
 
 A liquid-glass emoji suggestion bar for Linux desktops, built with Electron +

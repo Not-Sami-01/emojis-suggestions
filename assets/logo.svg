@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="112" viewBox="0 0 640 112" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">Emoji Suggestions</title>
+  <desc id="desc">A slim wordmark with a simple smiling emoji mark.</desc>
+  <defs>
+    <linearGradient id="face" x1="12" y1="14" x2="88" y2="90" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE48A"/>
+      <stop offset="1" stop-color="#FFB84D"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(10 12)">
+    <circle cx="44" cy="44" r="36" fill="url(#face)"/>
+    <path d="M32 38v1M56 38v1" stroke="#47351F" stroke-width="5" stroke-linecap="round"/>
+    <path d="M29 51c3.8 8 9 12 15 12s11.2-4 15-12" stroke="#47351F" stroke-width="4" stroke-linecap="round"/>
+    <path d="M7 43h-5M86 43h-5M44 7V2" stroke="#F58B67" stroke-width="2.5" stroke-linecap="round" opacity=".8"/>
+  </g>
+  <text x="112" y="69" fill="#20232B" font-family="Inter, Avenir, Helvetica, Arial, sans-serif" font-size="46" font-weight="400" letter-spacing="-1.7">emoji</text>
+  <text x="259" y="69" fill="#747985" font-family="Inter, Avenir, Helvetica, Arial, sans-serif" font-size="46" font-weight="300" letter-spacing="-1.8">suggestions</text>
+</svg>
