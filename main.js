@@ -178,12 +178,26 @@ function showBar(seed) {
     win.show();
     win.webContents.send('show', { seed: seed || '', animate: true });
   }
+  const b = win.getBounds();
+  console.log(`[show] bar visible=${visible} at ${b.x},${b.y}`);
+  focusBar(0);
+}
+
+// GNOME Wayland can refuse the first programmatic focus (focus-stealing
+// prevention, often while the `--show` helper process is exiting), so retry
+// briefly instead of giving up after one attempt.
+function focusBar(attempt) {
+  if (!win) return;
   win.focus();
-  // Verify focus actually landed (GNOME Wayland can refuse programmatic focus).
-  setTimeout(() => {
-    if (!win) return;
-    if (!win.isFocused()) console.warn('[focus] compositor did not focus the emoji bar');
-  }, 350);
+  if (win.isFocused()) {
+    if (attempt > 0) console.log(`[focus] bar focused on retry ${attempt}`);
+    return;
+  }
+  if (attempt < 8) {
+    setTimeout(() => focusBar(attempt + 1), 250);
+  } else {
+    console.warn('[focus] compositor did not focus the emoji bar');
+  }
 }
 
 function onHotkey() {
@@ -234,6 +248,39 @@ ipcMain.handle('read-clipboard', () => {
 ipcMain.handle('close', () => {
   if (win) win.hide();
   return true;
+});
+
+// --- manual window drag ----------------------------------------------------
+// The renderer forwards pointer events from the bar's surface (CSS app-region
+// drag does not engage GNOME's move grab here); we move the window ourselves.
+let dragOffset = null;
+
+ipcMain.on('drag-start', (_e, p) => {
+  if (!win || !p || !Number.isFinite(p.screenX)) return;
+  const b = win.getBounds();
+  dragOffset = { x: p.screenX - b.x, y: p.screenY - b.y };
+  console.log(`[drag] start at ${p.screenX},${p.screenY} (window ${b.x},${b.y})`);
+});
+
+ipcMain.on('drag-move', (_e, p) => {
+  if (!win || !dragOffset || !p || !Number.isFinite(p.screenX)) return;
+  let x = Math.round(p.screenX - dragOffset.x);
+  let y = Math.round(p.screenY - dragOffset.y);
+  // Keep a usable slice of the bar within the union of connected displays.
+  const ds = screen.getAllDisplays().map((d) => d.bounds);
+  const minX = Math.min(...ds.map((d) => d.x));
+  const maxX = Math.max(...ds.map((d) => d.x + d.width));
+  const minY = Math.min(...ds.map((d) => d.y));
+  const maxY = Math.max(...ds.map((d) => d.y + d.height));
+  x = Math.min(Math.max(x, minX + 40), maxX - BAR_W - 40);
+  y = Math.min(Math.max(y, minY + 30), maxY - BAR_H - 10);
+  win.setPosition(x, y);
+});
+
+ipcMain.on('drag-end', () => {
+  if (!dragOffset) return;
+  dragOffset = null;
+  scheduleSavePosition();
 });
 
 // Shift+Enter: paste the emoji into the app behind, then reopen the bar so
@@ -301,6 +348,12 @@ ipcMain.handle('pick', async (_e, emoji) => {
 // --- Lifecycle -------------------------------------------------------------
 
 app.whenReady().then(() => {
+  // A second instance only exists to hand its argv to the running one
+  // (handled via the 'second-instance' event) — exit without starting up.
+  if (!hasSingleInstanceLock) {
+    app.quit();
+    return;
+  }
   if (process.argv.includes('--quit')) {
     app.quit();
     return;

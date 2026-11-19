@@ -12,6 +12,31 @@
   let sel = 0;
   let debounce = null;
   let statusTimer = null;
+  let dragging = false;
+
+  // --- manual drag -------------------------------------------------------
+  // Electron's -webkit-app-region drag doesn't engage GNOME's move grab on
+  // this setup, so the bar's surface forwards pointer events to the main
+  // process, which moves the window itself.
+  function endDrag() {
+    if (!dragging) return;
+    dragging = false;
+    barEl.classList.remove('dragging');
+    api.dragEnd();
+  }
+
+  barEl.addEventListener('mousedown', (e) => {
+    if (e.button !== 0 || e.target.closest('.emoji')) return;
+    e.preventDefault();
+    dragging = true;
+    barEl.classList.add('dragging');
+    api.dragStart({ screenX: e.screenX, screenY: e.screenY });
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (dragging) api.dragMove({ screenX: e.screenX, screenY: e.screenY });
+  });
+  window.addEventListener('mouseup', endDrag);
+  window.addEventListener('blur', endDrag);
 
   function currentWord() {
     const tokens = query.split(/\s+/);

@@ -21,16 +21,14 @@ if [[ ! -x "$FIRST_TOKEN" ]] && ! command -v "$FIRST_TOKEN" >/dev/null 2>&1; the
 fi
 
 command -v gsettings >/dev/null || { echo "gsettings not found — this installer supports GNOME." >&2; exit 1; }
+command -v python3 >/dev/null || { echo "python3 is required to update the shortcut list." >&2; exit 1; }
 
 BASE="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings"
-SHOW="$BASE/emoji-suggestions-show/"
-QUIT="$BASE/emoji-suggestions-quit/"
+SHOW="$BASE/emoji-bar/"
+QUIT="$BASE/emoji-bar-quit/"
 CURRENT="$(gsettings get org.gnome.settings-daemon.plugins.media-keys custom-keybindings)"
 
-python3 - "$CURRENT" "$SHOW" "$QUIT" <<'PY' | {
-  read -r SHOW_PATHS
-  gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "$SHOW_PATHS"
-}
+SHOW_PATHS="$(python3 - "$CURRENT" "$SHOW" "$QUIT" <<'PY'
 import ast, sys
 current = ast.literal_eval(sys.argv[1])
 for value in sys.argv[2:]:
@@ -38,6 +36,8 @@ for value in sys.argv[2:]:
         current.append(value)
 print(repr(current))
 PY
+)"
+gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "$SHOW_PATHS"
 
 gsettings set "org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$SHOW" name 'Emoji Suggestions: Open'
 gsettings set "org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$SHOW" binding '<Control><Alt>Return'

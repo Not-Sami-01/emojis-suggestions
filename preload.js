@@ -10,4 +10,7 @@ contextBridge.exposeInMainWorld('emojiBar', {
   readClipboard: () => ipcRenderer.invoke('read-clipboard'),
   onShow: (cb) => ipcRenderer.on('show', (_e, payload) => cb(payload)),
   onStatus: (cb) => ipcRenderer.on('status', (_e, text) => cb(text)),
+  dragStart: (p) => ipcRenderer.send('drag-start', p),
+  dragMove: (p) => ipcRenderer.send('drag-move', p),
+  dragEnd: () => ipcRenderer.send('drag-end'),
 });
