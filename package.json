@@ -2,7 +2,7 @@
   "name": "emoji-suggestions-bar",
   "version": "1.0.0",
   "description": "Liquid-glass emoji suggestion bar for Linux (GNOME/Wayland)",
-  "homepage": "https://github.com/your-name/emojis-suggestions",
+  "homepage": "https://github.com/Not-Sami-01/emojis-suggestions",
   "desktopName": "emoji-suggestions-bar",
   "main": "main.js",
   "scripts": {

@@ -54,7 +54,7 @@ shortcut installer and focus behavior are GNOME-specific.
 ### Option A — from source
 
 ```bash
-git clone <this-repo> && cd emojis-suggestions
+git clone https://github.com/Not-Sami-01/emojis-suggestions.git && cd emojis-suggestions
 npm run setup        # installs deps, downloads Unicode data, builds the DB
 npm start
 ```
