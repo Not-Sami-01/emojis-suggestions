@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Packaging output
+dist/
+
+# Downloaded Unicode sources (regenerate with `npm run build:data`)
+data/sources/
+
+# Logs / local debug output
+*.log
+*.png
+
+# Editor/OS noise
+.DS_Store
+*.swp
+.idea/
+.vscode/

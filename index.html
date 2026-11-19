@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'">
+  <title>Emoji Suggestions</title>
+  <link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+  <div id="bar">
+    <div class="sheen" aria-hidden="true"></div>
+    <div class="top">
+      <span id="word" class="word"></span>
+      <span id="name" class="name"></span>
+    </div>
+    <div id="list" class="list" role="listbox" aria-label="Emoji suggestions"></div>
+  </div>
+  <script src="src/renderer.js"></script>
+</body>
+</html>

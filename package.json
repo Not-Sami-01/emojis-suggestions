@@ -1,0 +1,40 @@
+{
+  "name": "emoji-suggestions-bar",
+  "version": "1.0.0",
+  "description": "Liquid-glass emoji suggestion bar for Linux (GNOME/Wayland)",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "start:show": "electron . --show",
+    "build:data": "node scripts/download-emoji-data.js && node scripts/build-emoji-db.js",
+    "build": "npm run build:data && electron-builder --linux",
+    "build:linux": "electron-builder --linux AppImage deb",
+    "setup": "bash scripts/setup.sh",
+    "test": "node --test"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "io.github.emoji-suggestions-bar",
+    "productName": "Emoji Suggestions",
+    "asar": true,
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "src/**/*",
+      "data/emojis.json",
+      "package.json"
+    ],
+    "linux": {
+      "category": "Utility;TextTools;",
+      "target": ["AppImage", "deb"],
+      "maintainer": "Emoji Suggestions Bar contributors",
+      "synopsis": "Keyboard-driven emoji picker",
+      "description": "A searchable emoji picker and suggestion bar for Linux desktops."
+    }
+  }
+}

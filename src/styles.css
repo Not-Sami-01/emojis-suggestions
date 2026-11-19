@@ -1,0 +1,265 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+}
+
+body {
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: default;
+}
+
+/* ---- liquid glass bar ---------------------------------------------------- */
+
+#bar {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
+  width: 660px;
+  padding: 10px 14px 12px;
+  border-radius: 26px;
+  color: rgba(255, 255, 255, 0.94);
+  overflow: hidden;
+  cursor: grab;
+  -webkit-app-region: drag;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.16) 0%,
+      rgba(255, 255, 255, 0.05) 38%,
+      rgba(255, 255, 255, 0.03) 70%,
+      rgba(255, 255, 255, 0.10) 100%
+    ),
+    rgba(14, 16, 24, 0.66);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    0 18px 44px rgba(0, 0, 0, 0.5),
+    0 6px 16px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.10),
+    inset 0 0 32px rgba(160, 190, 255, 0.06);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+}
+
+/* specular highlight (top-left) + hairline (top edge) */
+#bar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(120% 90% at 18% -10%, rgba(255, 255, 255, 0.32), transparent 46%),
+    linear-gradient(90deg, transparent 6%, rgba(255, 255, 255, 0.55) 50%, transparent 94%);
+  background-size: auto, 60% 1px;
+  background-position: 0 0, 20% 0;
+  background-repeat: no-repeat, no-repeat;
+  pointer-events: none;
+}
+
+.sheen {
+  position: absolute;
+  top: 0;
+  left: -45%;
+  width: 42%;
+  height: 100%;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.16), transparent);
+  transform: skewX(-18deg);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ---- top row ------------------------------------------------------------- */
+
+.top {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  height: 20px;
+  padding: 0 6px 6px;
+}
+
+.word {
+  font-family: ui-monospace, 'Cascadia Mono', Menlo, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.92);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 55%;
+}
+
+.word::after {
+  content: '▍';
+  margin-left: 1px;
+  color: rgba(255, 255, 255, 0.75);
+  animation: blink 1.05s step-end infinite;
+}
+
+.word:empty::after {
+  content: 'type to search';
+  font-family: system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 12.5px;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.40);
+  animation: none;
+}
+
+.name {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.55);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 44%;
+  text-align: right;
+}
+
+.name.status {
+  color: rgba(255, 214, 133, 0.95);
+}
+
+/* ---- emoji list ---------------------------------------------------------- */
+
+.list {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.list::-webkit-scrollbar {
+  display: none;
+}
+
+.emoji {
+  flex: 0 0 auto;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  font-family: 'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif;
+  font-size: 27px;
+  line-height: 1;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  transition:
+    transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+  animation: fade 0.3s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation-delay: calc(var(--i) * 16ms);
+}
+
+.emoji:hover {
+  background: rgba(255, 255, 255, 0.14);
+  transform: translateY(-3px) scale(1.05);
+}
+
+.emoji:active {
+  transform: scale(0.94);
+  transition-duration: 0.06s;
+}
+
+.emoji.sel {
+  position: relative;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.55),
+    0 8px 18px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transform: translateY(-4px) scale(1.1);
+}
+
+.empty {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
+  padding: 12px 8px;
+}
+
+/* ---- animation ----------------------------------------------------------- */
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(18px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes sweep {
+  0% {
+    opacity: 0;
+    left: -45%;
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    left: 130%;
+  }
+}
+
+#bar.enter {
+  animation: rise 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+#bar.enter .sheen {
+  animation: sweep 0.7s 0.08s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
