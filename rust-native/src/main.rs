@@ -2,7 +2,6 @@ use gtk::gdk;
 use gtk::prelude::*;
 use gtk::{Application, ApplicationWindow, Button, Entry, FlowBox, Label, Orientation};
 use serde::Deserialize;
-use std::cell::RefCell;
 use std::process::Command;
 use std::rc::Rc;
 use std::time::Duration;
@@ -90,11 +89,11 @@ fn build_window(app: &Application, entries: Rc<Vec<Emoji>>) {
         .build();
     root.append(&heading);
 
-    let search = Entry::builder()
+    let query_entry = Entry::builder()
         .placeholder_text("Search by name or meaning…")
         .hexpand(true)
         .build();
-    root.append(&search);
+    root.append(&query_entry);
 
     let results = FlowBox::builder()
         .selection_mode(gtk::SelectionMode::None)
@@ -142,21 +141,21 @@ fn build_window(app: &Application, entries: Rc<Vec<Emoji>>) {
                     if let Some(display) = gdk::Display::default() {
                         display.clipboard().set_text(&emoji);
                         window.set_visible(false);
-                        glib::timeout_add_local_once(Duration::from_millis(180), || {
+                        gtk::glib::timeout_add_local_once(Duration::from_millis(180), || {
                             let _ = Command::new("ydotool")
                                 .args(["key", "29:1", "47:1", "47:0", "29:0"])
                                 .spawn();
                         });
                     }
                 });
-                results.append(&button);
+                results.insert(&button, -1);
             }
         }
     };
 
     let first_render = render.clone();
     first_render("");
-    search.connect_changed(move |entry| render(&entry.text()));
+    query_entry.connect_changed(move |entry| render(&entry.text()));
 
     let css = gtk::CssProvider::new();
     css.load_from_data(
@@ -171,5 +170,5 @@ fn build_window(app: &Application, entries: Rc<Vec<Emoji>>) {
     }
 
     window.present();
-    search.grab_focus();
+    query_entry.grab_focus();
 }
