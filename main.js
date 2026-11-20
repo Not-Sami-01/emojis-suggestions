@@ -63,7 +63,12 @@ function showSetup() {
     },
   });
   setupWin.setMenuBarVisibility(false);
-  setupWin.loadFile(path.join(__dirname, 'installer.html'));
+  const html = fs.readFileSync(path.join(__dirname, 'installer.html'), 'utf8')
+    .replace(/<meta http-equiv="Content-Security-Policy"[^>]*>/, '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'; script-src \'unsafe-inline\'; img-src data:">')
+    .replace('<link rel="stylesheet" href="src/installer.css">', `<style>${fs.readFileSync(path.join(__dirname, 'src/installer.css'), 'utf8')}</style>`)
+    .replace('src="assets/logo-mark.svg"', `src="data:image/svg+xml;base64,${fs.readFileSync(path.join(__dirname, 'assets/logo-mark.svg')).toString('base64')}"`)
+    .replace('<script src="src/installer.js"></script>', `<script>${fs.readFileSync(path.join(__dirname, 'src/installer.js'), 'utf8')}</script>`);
+  setupWin.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
   setupWin.once('ready-to-show', () => setupWin && setupWin.show());
   setupWin.on('closed', () => { setupWin = null; });
 }
