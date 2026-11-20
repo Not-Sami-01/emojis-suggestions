@@ -41,6 +41,8 @@ app.on('second-instance', (_event, argv) => {
   else if (argv.includes('--setup')) showSetup();
   else if (argv.includes('--settings')) showSettings();
   else if (argv.includes('--show')) onHotkey();
+  else if (!fs.existsSync(SETUP_FILE)) showSetup();
+  else onHotkey();
 });
 
 function showSetup() {
