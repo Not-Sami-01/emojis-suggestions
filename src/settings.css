@@ -20,6 +20,10 @@ select { width: 100%; padding: 10px 12px; color: #303540; background: #f8f9fb; b
 .toggle input:checked + i::after { transform: translateX(16px); }
 .toggle input:focus-visible + i { outline: 2px solid #526fae; outline-offset: 2px; }
 .hint { margin: 17px 0 0; color: #818691; font-size: 11px; line-height: 1.55; }
+.uninstall-section { padding-bottom: 8px; }
+.uninstall-section .hint { margin: -7px 0 12px; }
+.danger { color: #a33e3e; background: #fff2f1; border: 1px solid #f1d8d6; }
+.danger:hover { color: white; background: #b74742; }
 footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 17px; border-top: 1px solid #eceef2; }
 #status { color: #34815a; font-size: 11px; }
 button { padding: 10px 15px; color: white; background: #292e39; border: 0; border-radius: 9px; font: 600 12px system-ui; cursor: pointer; }

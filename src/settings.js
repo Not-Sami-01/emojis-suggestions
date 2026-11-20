@@ -21,3 +21,14 @@ document.getElementById('save').addEventListener('click', async () => {
     status.style.color = '#b33e39';
   }
 });
+
+document.getElementById('uninstall').addEventListener('click', async () => {
+  if (!window.confirm('Uninstall Emoji Suggestions and remove its GNOME shortcuts and saved preferences?')) return;
+  status.style.color = '#b33e39';
+  status.textContent = 'Removing Emoji Suggestions…';
+  try {
+    await window.settingsApi.uninstall();
+  } catch (error) {
+    status.textContent = error.message || 'Uninstall failed';
+  }
+});

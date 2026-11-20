@@ -88,7 +88,13 @@ function showSettings() {
     },
   });
   settingsWin.setMenuBarVisibility(false);
-  settingsWin.loadFile(path.join(__dirname, 'settings.html'));
+  const htmlPath = path.join(__dirname, 'settings.html');
+  const html = fs.readFileSync(htmlPath, 'utf8')
+    .replace(/<meta http-equiv="Content-Security-Policy"[^>]*>/, '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'; script-src \'unsafe-inline\'; img-src data:">')
+    .replace('<link rel="stylesheet" href="src/settings.css">', `<style>${fs.readFileSync(path.join(__dirname, 'src/settings.css'), 'utf8')}</style>`)
+    .replace('src="assets/logo-mark.svg"', `src="data:image/svg+xml;base64,${fs.readFileSync(path.join(__dirname, 'assets/logo-mark.svg')).toString('base64')}"`)
+    .replace('<script src="src/settings.js"></script>', `<script>${fs.readFileSync(path.join(__dirname, 'src/settings.js'), 'utf8')}</script>`);
+  settingsWin.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
   settingsWin.once('ready-to-show', () => settingsWin && settingsWin.show());
   settingsWin.on('closed', () => { settingsWin = null; });
 }
@@ -141,6 +147,36 @@ ipcMain.handle('settings:save', (_event, value) => {
 });
 
 ipcMain.handle('settings:open', () => { showSettings(); return true; });
+
+ipcMain.handle('settings:uninstall', () => {
+  const home = app.getPath('home');
+  const dataHome = process.env.XDG_DATA_HOME || path.join(home, '.local', 'share');
+  const configHome = process.env.XDG_CONFIG_HOME || path.join(home, '.config');
+  const ownedFiles = [
+    path.join(home, 'Applications', 'Emoji Suggestions.AppImage'),
+    path.join(dataHome, 'applications', 'emoji-suggestions.desktop'),
+    path.join(dataHome, 'icons', 'hicolor', 'scalable', 'apps', 'emoji-suggestions.svg'),
+    path.join(configHome, 'autostart', 'emoji-suggestions.desktop'),
+  ];
+  for (const file of ownedFiles) {
+    try { fs.unlinkSync(file); } catch (err) { if (err.code !== 'ENOENT') throw err; }
+  }
+
+  const base = '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings';
+  const showPath = `${base}/emoji-bar/`;
+  const quitPath = `${base}/emoji-bar-quit/`;
+  const schema = 'org.gnome.settings-daemon.plugins.media-keys';
+  const current = execFileSync('gsettings', ['get', schema, 'custom-keybindings'], { encoding: 'utf8' });
+  const paths = [...current.matchAll(/'([^']+)'/g)].map((match) => match[1]);
+  const remaining = paths.filter((item) => item !== showPath && item !== quitPath);
+  execFileSync('gsettings', ['set', schema, 'custom-keybindings', `[${remaining.map((item) => `'${item}'`).join(', ')}]`]);
+  for (const suffix of ['emoji-bar', 'emoji-bar-quit']) {
+    execFileSync('gsettings', ['reset-recursively', `${schema}.custom-keybinding:${base}/${suffix}/`]);
+  }
+  fs.rmSync(CONFIG_DIR, { recursive: true, force: true });
+  setTimeout(() => app.quit(), 500);
+  return true;
+});
 
 function shellQuote(value) {
   return `'${String(value).replace(/'/g, `'\\''`)}'`;
