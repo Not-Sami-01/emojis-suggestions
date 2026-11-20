@@ -24,11 +24,15 @@
     "productName": "Emoji Suggestions",
     "icon": "build/icon.svg",
     "asar": true,
+    "electronLanguages": ["en-US"],
     "files": [
       "main.js",
       "preload.js",
+      "setup-preload.js",
       "index.html",
+      "installer.html",
       "src/**/*",
+      "assets/logo-mark.svg",
       "data/emojis.json",
       "package.json"
     ],

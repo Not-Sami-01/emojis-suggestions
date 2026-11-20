@@ -4,6 +4,7 @@ const { app, BrowserWindow, screen, globalShortcut, ipcMain, clipboard } = requi
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const { execFileSync } = require('child_process');
 const { TypingListener } = require('./src/evdev-typing');
 const { pasteViaYdotool } = require('./src/ydotool');
 const { suggest } = require('./src/suggestions');
@@ -19,6 +20,7 @@ const CONFIG_DIR = path.join(
 );
 const POSITION_FILE = path.join(CONFIG_DIR, 'position.json');
 const RECENTS_FILE = path.join(CONFIG_DIR, 'recents.json');
+const SETUP_FILE = path.join(CONFIG_DIR, 'setup-complete');
 const PID_FILE = path.join(process.env.XDG_RUNTIME_DIR || os.tmpdir(), 'emoji-bar.pid');
 
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
@@ -29,10 +31,106 @@ let listener = null;
 let lastHotkeyAt = 0;
 let savedPosition = null; // {x, y} remembered from the last drag
 let saveTimer = null;
+let setupWin = null;
 
 app.on('second-instance', (_event, argv) => {
   if (argv.includes('--quit')) app.quit();
+  else if (argv.includes('--setup')) showSetup();
   else if (argv.includes('--show')) onHotkey();
+});
+
+function showSetup() {
+  if (setupWin && !setupWin.isDestroyed()) {
+    setupWin.show();
+    setupWin.focus();
+    return;
+  }
+  setupWin = new BrowserWindow({
+    width: 480,
+    height: 550,
+    resizable: false,
+    show: false,
+    title: 'Set up Emoji Suggestions',
+    webPreferences: {
+      preload: path.join(__dirname, 'setup-preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      spellcheck: false,
+    },
+  });
+  setupWin.setMenuBarVisibility(false);
+  setupWin.loadFile(path.join(__dirname, 'installer.html'));
+  setupWin.once('ready-to-show', () => setupWin && setupWin.show());
+  setupWin.on('closed', () => { setupWin = null; });
+}
+
+function shellQuote(value) {
+  return `'${String(value).replace(/'/g, `'\\''`)}'`;
+}
+
+function desktopQuote(value) {
+  return `"${String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+}
+
+ipcMain.handle('setup:install', () => {
+  const home = app.getPath('home');
+  const applications = path.join(home, 'Applications');
+  fs.mkdirSync(applications, { recursive: true });
+  let executable = process.execPath;
+  let launcherPrefix = '';
+
+  if (process.env.APPIMAGE && fs.existsSync(process.env.APPIMAGE)) {
+    executable = path.join(applications, 'Emoji Suggestions.AppImage');
+    fs.copyFileSync(process.env.APPIMAGE, executable);
+    fs.chmodSync(executable, 0o755);
+    launcherPrefix = 'env APPIMAGE_EXTRACT_AND_RUN=1 ';
+  }
+
+  const appCommand = app.isPackaged
+    ? `${launcherPrefix}${shellQuote(executable)}`
+    : `${shellQuote(process.execPath)} ${shellQuote(app.getAppPath())}`;
+  const base = '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings';
+  const showPath = `${base}/emoji-bar/`;
+  const quitPath = `${base}/emoji-bar-quit/`;
+  const settings = 'org.gnome.settings-daemon.plugins.media-keys';
+  const current = execFileSync('gsettings', ['get', settings, 'custom-keybindings'], { encoding: 'utf8' });
+  const paths = [...current.matchAll(/'([^']+)'/g)].map((match) => match[1]);
+  if (!paths.includes(showPath)) paths.push(showPath);
+  if (!paths.includes(quitPath)) paths.push(quitPath);
+  execFileSync('gsettings', ['set', settings, 'custom-keybindings', `[${paths.map((item) => `'${item}'`).join(', ')}]`]);
+  const setShortcut = (suffix, name, binding, command) => {
+    const schema = `${settings}.custom-keybinding:${base}/${suffix}/`;
+    execFileSync('gsettings', ['set', schema, 'name', name]);
+    execFileSync('gsettings', ['set', schema, 'binding', binding]);
+    execFileSync('gsettings', ['set', schema, 'command', command]);
+  };
+  setShortcut('emoji-bar', 'Emoji Suggestions: Open', '<Control><Alt>Return', `${appCommand} --show`);
+  setShortcut('emoji-bar-quit', 'Emoji Suggestions: Quit', '<Control><Alt>q', `${appCommand} --quit`);
+
+  const dataHome = process.env.XDG_DATA_HOME || path.join(home, '.local', 'share');
+  const desktopDir = path.join(dataHome, 'applications');
+  const iconDir = path.join(dataHome, 'icons', 'hicolor', 'scalable', 'apps');
+  fs.mkdirSync(desktopDir, { recursive: true });
+  fs.mkdirSync(iconDir, { recursive: true });
+  const iconPath = path.join(iconDir, 'emoji-suggestions.svg');
+  fs.copyFileSync(path.join(__dirname, 'assets', 'logo-mark.svg'), iconPath);
+  const desktopCommand = app.isPackaged
+    ? `${launcherPrefix}${desktopQuote(executable)} --show`
+    : `${desktopQuote(process.execPath)} ${desktopQuote(app.getAppPath())} --show`;
+  const desktop = [
+    '[Desktop Entry]', 'Type=Application', 'Name=Emoji Suggestions',
+    `Exec=${desktopCommand}`, `Icon=${iconPath}`,
+    'Categories=Utility;TextTools;', 'Terminal=false', 'StartupNotify=false', '',
+  ].join('\n');
+  fs.writeFileSync(path.join(desktopDir, 'emoji-suggestions.desktop'), desktop, { mode: 0o644 });
+  fs.mkdirSync(CONFIG_DIR, { recursive: true });
+  fs.writeFileSync(SETUP_FILE, '1');
+  return { message: 'Installed. Press Ctrl+Alt+Enter to open the emoji bar.' };
+});
+
+ipcMain.handle('setup:close', () => {
+  if (setupWin && !setupWin.isDestroyed()) setupWin.close();
+  return true;
 });
 
 function defaultBarBounds() {
@@ -361,6 +459,7 @@ app.whenReady().then(() => {
   loadPosition();
   loadRecents();
   createWindow();
+  if (process.argv.includes('--setup') || !fs.existsSync(SETUP_FILE)) showSetup();
   registerShortcuts();
 
   if (process.env.EMOJI_BAR_ENABLE_KEYBOARD_MONITOR === '1') {

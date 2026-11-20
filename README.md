@@ -74,6 +74,9 @@ chmod +x emoji-suggestions-bar-*.AppImage
 ./emoji-suggestions-bar-*.AppImage
 ```
 
+On first launch, a setup window lets you add the app to your GNOME app menu
+and install its `Ctrl+Alt+Enter` / `Ctrl+Alt+Q` shortcuts for your user.
+
 - Fedora/RHEL: AppImages need the fuse2 compatibility library once —
   `sudo dnf install fuse-libs`
 - Ubuntu/Debian: `sudo apt install libfuse2`

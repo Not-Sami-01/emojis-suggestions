@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Set up Emoji Suggestions</title>
+  <link rel="stylesheet" href="src/installer.css">
+</head>
+<body>
+  <main class="card">
+    <img src="assets/logo-mark.svg" alt="" class="mark">
+    <p class="eyebrow">ONE-TIME SETUP</p>
+    <h1>Ready when you are.</h1>
+    <p class="intro">Add Emoji Suggestions to your GNOME app menu and enable the keyboard shortcuts.</p>
+    <div class="shortcut"><kbd>Ctrl</kbd><span>+</span><kbd>Alt</kbd><span>+</span><kbd>Enter</kbd><span class="action">Open the emoji bar</span></div>
+    <div class="shortcut"><kbd>Ctrl</kbd><span>+</span><kbd>Alt</kbd><span>+</span><kbd>Q</kbd><span class="action">Quit Emoji Suggestions</span></div>
+    <button id="install">Install for this user</button>
+    <p id="status" role="status" aria-live="polite">No administrator password needed.</p>
+    <button id="close" class="text-button">Maybe later</button>
+  </main>
+  <script src="src/installer.js"></script>
+</body>
+</html>
