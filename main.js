@@ -21,6 +21,7 @@ const CONFIG_DIR = path.join(
 const POSITION_FILE = path.join(CONFIG_DIR, 'position.json');
 const RECENTS_FILE = path.join(CONFIG_DIR, 'recents.json');
 const SETUP_FILE = path.join(CONFIG_DIR, 'setup-complete');
+const SETTINGS_FILE = path.join(CONFIG_DIR, 'settings.json');
 const PID_FILE = path.join(process.env.XDG_RUNTIME_DIR || os.tmpdir(), 'emoji-bar.pid');
 
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
@@ -32,10 +33,13 @@ let lastHotkeyAt = 0;
 let savedPosition = null; // {x, y} remembered from the last drag
 let saveTimer = null;
 let setupWin = null;
+let settingsWin = null;
+let settings = { theme: 'system', liquid: 'subtle', launchAtLogin: false };
 
 app.on('second-instance', (_event, argv) => {
   if (argv.includes('--quit')) app.quit();
   else if (argv.includes('--setup')) showSetup();
+  else if (argv.includes('--settings')) showSettings();
   else if (argv.includes('--show')) onHotkey();
 });
 
@@ -63,6 +67,80 @@ function showSetup() {
   setupWin.once('ready-to-show', () => setupWin && setupWin.show());
   setupWin.on('closed', () => { setupWin = null; });
 }
+
+function showSettings() {
+  if (settingsWin && !settingsWin.isDestroyed()) {
+    settingsWin.show();
+    settingsWin.focus();
+    return;
+  }
+  settingsWin = new BrowserWindow({
+    width: 560,
+    height: 590,
+    resizable: false,
+    show: false,
+    title: 'Emoji Suggestions Settings',
+    webPreferences: {
+      preload: path.join(__dirname, 'settings-preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      spellcheck: false,
+    },
+  });
+  settingsWin.setMenuBarVisibility(false);
+  settingsWin.loadFile(path.join(__dirname, 'settings.html'));
+  settingsWin.once('ready-to-show', () => settingsWin && settingsWin.show());
+  settingsWin.on('closed', () => { settingsWin = null; });
+}
+
+function loadSettings() {
+  try {
+    const value = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'));
+    if (['system', 'dark', 'light'].includes(value.theme)) settings.theme = value.theme;
+    if (['off', 'subtle', 'vivid'].includes(value.liquid)) settings.liquid = value.liquid;
+    settings.launchAtLogin = value.launchAtLogin === true;
+  } catch { /* defaults for a fresh install */ }
+}
+
+function updateLoginEntry(enabled) {
+  const home = app.getPath('home');
+  const dataHome = process.env.XDG_DATA_HOME || path.join(home, '.local', 'share');
+  const autoDir = path.join(process.env.XDG_CONFIG_HOME || path.join(home, '.config'), 'autostart');
+  const entry = path.join(autoDir, 'emoji-suggestions.desktop');
+  if (!enabled) {
+    try { fs.unlinkSync(entry); } catch (err) { if (err.code !== 'ENOENT') throw err; }
+    return;
+  }
+  fs.mkdirSync(autoDir, { recursive: true });
+  let executable = process.execPath;
+  let prefix = '';
+  if (process.env.APPIMAGE && fs.existsSync(process.env.APPIMAGE)) {
+    const installed = path.join(home, 'Applications', 'Emoji Suggestions.AppImage');
+    executable = fs.existsSync(installed) ? installed : process.env.APPIMAGE;
+    prefix = 'env APPIMAGE_EXTRACT_AND_RUN=1 ';
+  }
+  const command = app.isPackaged
+    ? `${prefix}${desktopQuote(executable)}`
+    : `${desktopQuote(process.execPath)} ${desktopQuote(app.getAppPath())}`;
+  const icon = path.join(dataHome, 'icons', 'hicolor', 'scalable', 'apps', 'emoji-suggestions.svg');
+  const content = ['[Desktop Entry]', 'Type=Application', 'Name=Emoji Suggestions', `Exec=${command}`, `Icon=${icon}`, 'Terminal=false', 'X-GNOME-Autostart-enabled=true', ''].join('\n');
+  fs.writeFileSync(entry, content, { mode: 0o644 });
+}
+
+ipcMain.handle('settings:load', () => settings);
+ipcMain.handle('settings:save', (_event, value) => {
+  if (!value || !['system', 'dark', 'light'].includes(value.theme) || !['off', 'subtle', 'vivid'].includes(value.liquid)) {
+    throw new Error('Invalid settings');
+  }
+  settings = { theme: value.theme, liquid: value.liquid, launchAtLogin: value.launchAtLogin === true };
+  fs.mkdirSync(CONFIG_DIR, { recursive: true });
+  fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
+  updateLoginEntry(settings.launchAtLogin);
+  if (win && !win.isDestroyed()) win.webContents.send('settings:changed', settings);
+  return true;
+});
+
+ipcMain.handle('settings:open', () => { showSettings(); return true; });
 
 function shellQuote(value) {
   return `'${String(value).replace(/'/g, `'\\''`)}'`;
@@ -458,8 +536,10 @@ app.whenReady().then(() => {
   }
   loadPosition();
   loadRecents();
+  loadSettings();
   createWindow();
   if (process.argv.includes('--setup') || !fs.existsSync(SETUP_FILE)) showSetup();
+  if (process.argv.includes('--settings')) showSettings();
   registerShortcuts();
 
   if (process.env.EMOJI_BAR_ENABLE_KEYBOARD_MONITOR === '1') {

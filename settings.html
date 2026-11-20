@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Emoji Suggestions Settings</title>
+  <link rel="stylesheet" href="src/settings.css">
+</head>
+<body>
+  <main>
+    <header><img src="assets/logo-mark.svg" alt=""><div><p>EMOJI SUGGESTIONS</p><h1>Settings</h1></div></header>
+    <section>
+      <h2>Appearance</h2>
+      <label for="theme">Theme</label>
+      <select id="theme"><option value="system">Use system setting</option><option value="dark">Dark glass</option><option value="light">Light glass</option></select>
+      <label for="liquid">Liquid motion</label>
+      <select id="liquid"><option value="subtle">Subtle</option><option value="vivid">Vivid</option><option value="off">Off</option></select>
+    </section>
+    <section>
+      <h2>Behavior</h2>
+      <label class="toggle"><span><strong>Launch at login</strong><small>Start quietly when you sign in.</small></span><input id="login" type="checkbox"><i></i></label>
+      <p class="hint">Drag the bar to stir the liquid effect. Shortcuts: Ctrl+Alt+Enter to open, Ctrl+Alt+Q to quit.</p>
+    </section>
+    <footer><span id="status" role="status"></span><button id="save">Save settings</button></footer>
+  </main>
+  <script src="src/settings.js"></script>
+</body>
+</html>

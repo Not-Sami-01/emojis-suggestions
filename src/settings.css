@@ -1,0 +1,26 @@
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; color: #252832; background: #f5f6f9; font: 14px system-ui, sans-serif; }
+main { width: min(100% - 36px, 520px); margin: 28px auto; padding: 27px 30px 22px; background: white; border: 1px solid #e8eaf0; border-radius: 20px; box-shadow: 0 18px 50px rgba(33,40,56,.09); }
+header { display: flex; align-items: center; gap: 14px; margin-bottom: 25px; }
+header img { width: 46px; height: 46px; }
+header p { margin: 0 0 2px; color: #8b909a; font-size: 10px; font-weight: 700; letter-spacing: .12em; }
+h1 { margin: 0; font-size: 25px; font-weight: 600; letter-spacing: -.04em; }
+section { padding: 18px 0; border-top: 1px solid #eceef2; }
+h2 { margin: 0 0 16px; font-size: 15px; font-weight: 650; }
+label[for] { display: block; margin: 13px 0 7px; color: #5e636e; font-size: 12px; }
+select { width: 100%; padding: 10px 12px; color: #303540; background: #f8f9fb; border: 1px solid #e3e6ec; border-radius: 9px; font: inherit; }
+.toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; }
+.toggle strong, .toggle small { display: block; }
+.toggle strong { font-size: 13px; font-weight: 550; }
+.toggle small { margin-top: 3px; color: #868b95; font-size: 11px; }
+.toggle input { position: absolute; opacity: 0; }
+.toggle i { position: relative; width: 38px; height: 22px; flex: 0 0 auto; background: #d9dce3; border-radius: 20px; transition: background .2s; }
+.toggle i::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; background: white; border-radius: 50%; box-shadow: 0 1px 3px #0002; transition: transform .2s; }
+.toggle input:checked + i { background: #748fd0; }
+.toggle input:checked + i::after { transform: translateX(16px); }
+.toggle input:focus-visible + i { outline: 2px solid #526fae; outline-offset: 2px; }
+.hint { margin: 17px 0 0; color: #818691; font-size: 11px; line-height: 1.55; }
+footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 17px; border-top: 1px solid #eceef2; }
+#status { color: #34815a; font-size: 11px; }
+button { padding: 10px 15px; color: white; background: #292e39; border: 0; border-radius: 9px; font: 600 12px system-ui; cursor: pointer; }
+button:hover { background: #414856; }

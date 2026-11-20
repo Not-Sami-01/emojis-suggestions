@@ -6,6 +6,7 @@
   const wordEl = document.getElementById('word');
   const nameEl = document.getElementById('name');
   const listEl = document.getElementById('list');
+  const settingsButton = document.getElementById('settings-button');
 
   let query = '';
   let items = [];
@@ -26,7 +27,7 @@
   }
 
   barEl.addEventListener('mousedown', (e) => {
-    if (e.button !== 0 || e.target.closest('.emoji')) return;
+    if (e.button !== 0 || e.target.closest('.emoji, .no-drag')) return;
     e.preventDefault();
     dragging = true;
     barEl.classList.add('dragging');
@@ -220,6 +221,17 @@
 
   document.addEventListener('contextmenu', (e) => e.preventDefault());
   document.addEventListener('auxclick', (e) => e.preventDefault());
+
+  settingsButton.addEventListener('click', () => api.openSettings());
+
+  api.getSettings().then((settings) => {
+    document.documentElement.dataset.theme = settings.theme;
+    document.documentElement.dataset.liquid = settings.liquid;
+  });
+  api.onSettings((settings) => {
+    document.documentElement.dataset.theme = settings.theme;
+    document.documentElement.dataset.liquid = settings.liquid;
+  });
 
   // --- main-process events --------------------------------------------------
 

@@ -53,6 +53,79 @@ body {
   -webkit-backdrop-filter: blur(24px) saturate(180%);
 }
 
+/* Color moves under the glass so the bar feels fluid, not like a static pane. */
+.liquid {
+  position: absolute;
+  z-index: 0;
+  inset: -95% -20%;
+  background:
+    radial-gradient(ellipse at 18% 46%, rgba(113, 191, 255, .42), transparent 34%),
+    radial-gradient(ellipse at 48% 68%, rgba(170, 127, 255, .32), transparent 38%),
+    radial-gradient(ellipse at 83% 35%, rgba(255, 160, 135, .28), transparent 35%);
+  filter: blur(23px) saturate(135%);
+  opacity: .7;
+  transform: translate3d(-3%, 2%, 0) rotate(-5deg) scale(1.08);
+  animation: liquid-drift 11s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+#bar.dragging .liquid {
+  opacity: 1;
+  filter: blur(15px) saturate(175%);
+  animation-duration: 1.8s;
+}
+
+:root[data-liquid='off'] .liquid,
+:root[data-liquid='off'] #bar::after { animation: none; opacity: 0; }
+:root[data-liquid='subtle'] .liquid { opacity: .35; }
+:root[data-liquid='vivid'] .liquid { opacity: .9; filter: blur(18px) saturate(175%); }
+:root[data-liquid='subtle'] #bar.dragging .liquid,
+:root[data-liquid='vivid'] #bar.dragging .liquid { opacity: 1; }
+
+:root[data-theme='light'] #bar {
+  color: rgba(31, 35, 44, .94);
+  background: linear-gradient(180deg, rgba(255,255,255,.82), rgba(241,244,251,.68)), rgba(247,248,252,.62);
+  border-color: rgba(255,255,255,.7);
+  box-shadow: 0 18px 44px rgba(31,37,52,.20), inset 0 1px 0 rgba(255,255,255,.9), inset 0 0 32px rgba(160,190,255,.12);
+}
+:root[data-theme='light'] .word { color: rgba(31,35,44,.92); }
+:root[data-theme='light'] .word::after { color: rgba(31,35,44,.7); }
+:root[data-theme='light'] .name { color: rgba(31,35,44,.58); }
+:root[data-theme='light'] .emoji { color: #20232b; background: rgba(255,255,255,.44); border-color: rgba(45,53,70,.10); }
+:root[data-theme='light'] .emoji.sel { background: rgba(255,255,255,.8); box-shadow: 0 0 0 2px rgba(74,107,166,.48), 0 8px 18px rgba(31,37,52,.18); }
+
+@media (prefers-color-scheme: light) {
+  :root[data-theme='system'] #bar { color: rgba(31,35,44,.94); background: linear-gradient(180deg, rgba(255,255,255,.82), rgba(241,244,251,.68)), rgba(247,248,252,.62); border-color: rgba(255,255,255,.7); }
+  :root[data-theme='system'] .word { color: rgba(31,35,44,.92); }
+  :root[data-theme='system'] .name { color: rgba(31,35,44,.58); }
+  :root[data-theme='system'] .emoji { color: #20232b; background: rgba(255,255,255,.44); border-color: rgba(45,53,70,.10); }
+}
+
+#bar::after {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(from var(--edge-angle, 0deg),
+    rgba(123, 205, 255, .08), rgba(187, 155, 255, .55),
+    rgba(255, 190, 157, .30), rgba(121, 218, 220, .48),
+    rgba(123, 205, 255, .08));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: .72;
+  animation: edge-flow 13s linear infinite;
+  pointer-events: none;
+}
+
+@property --edge-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
 /* specular highlight (top-left) + hairline (top edge) */
 #bar.dragging {
   cursor: grabbing;
@@ -89,6 +162,7 @@ body {
 
 .top {
   position: relative;
+  z-index: 1;
   display: flex;
   justify-content: space-between;
   align-items: baseline;
@@ -96,6 +170,20 @@ body {
   height: 20px;
   padding: 0 6px 6px;
 }
+
+#settings-button {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  color: rgba(255,255,255,.48);
+  border: 0;
+  background: transparent;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color .15s ease, transform .2s ease;
+}
+#settings-button:hover { color: white; transform: rotate(35deg); }
+:root[data-theme='light'] #settings-button { color: rgba(31,35,44,.46); }
 
 .word {
   font-family: ui-monospace, 'Cascadia Mono', Menlo, monospace;
@@ -145,6 +233,7 @@ body {
 
 .list {
   position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -247,6 +336,16 @@ body {
     opacity: 0;
     left: 130%;
   }
+}
+
+@keyframes liquid-drift {
+  0% { transform: translate3d(-4%, 1%, 0) rotate(-7deg) scale(1.08); }
+  50% { transform: translate3d(2%, -3%, 0) rotate(2deg) scale(1.14); }
+  100% { transform: translate3d(5%, 2%, 0) rotate(8deg) scale(1.08); }
+}
+
+@keyframes edge-flow {
+  to { --edge-angle: 360deg; }
 }
 
 #bar.enter {
