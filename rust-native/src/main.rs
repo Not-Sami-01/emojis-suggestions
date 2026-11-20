@@ -1,6 +1,8 @@
 use gtk::gdk;
 use gtk::prelude::*;
-use gtk::{Application, ApplicationWindow, Button, Entry, FlowBox, Label, Orientation};
+use gtk::{
+    Application, ApplicationWindow, Button, Entry, Label, Orientation, PolicyType, ScrolledWindow,
+};
 use serde::Deserialize;
 use std::process::Command;
 use std::rc::Rc;
@@ -72,43 +74,50 @@ fn build_window(app: &Application, entries: Rc<Vec<Emoji>>) {
         .application(app)
         .title("Emoji Suggestions · Native")
         .default_width(700)
-        .default_height(210)
+        .default_height(164)
         .resizable(false)
+        .decorated(false)
         .build();
 
-    let root = gtk::Box::new(Orientation::Vertical, 12);
-    root.set_margin_top(18);
-    root.set_margin_bottom(18);
-    root.set_margin_start(20);
-    root.set_margin_end(20);
+    let root = gtk::Box::new(Orientation::Vertical, 10);
+    root.add_css_class("surface");
+    root.set_margin_top(10);
+    root.set_margin_bottom(10);
+    root.set_margin_start(12);
+    root.set_margin_end(12);
 
+    let top = gtk::Box::new(Orientation::Horizontal, 12);
+    top.set_valign(gtk::Align::Center);
     let heading = Label::builder()
-        .label("Emoji Suggestions")
+        .label("emoji")
         .xalign(0.0)
-        .css_classes(["title-2"])
+        .css_classes(["brand"])
         .build();
-    root.append(&heading);
+    top.append(&heading);
 
     let query_entry = Entry::builder()
-        .placeholder_text("Search by name or meaning…")
+        .placeholder_text("Search emoji…")
         .hexpand(true)
+        .css_classes(["search-entry"])
         .build();
-    root.append(&query_entry);
+    top.append(&query_entry);
+    root.append(&top);
 
-    let results = FlowBox::builder()
-        .selection_mode(gtk::SelectionMode::None)
-        .max_children_per_line(12)
-        .min_children_per_line(6)
-        .column_spacing(6)
-        .row_spacing(6)
-        .homogeneous(true)
+    let results = gtk::Box::new(Orientation::Horizontal, 7);
+    results.set_valign(gtk::Align::Center);
+    let scroller = ScrolledWindow::builder()
+        .hscrollbar_policy(PolicyType::Never)
+        .vscrollbar_policy(PolicyType::Never)
+        .hexpand(true)
+        .child(&results)
         .build();
-    root.append(&results);
+    scroller.set_height_request(52);
+    root.append(&scroller);
 
     let status = Label::builder()
-        .label("Choose an emoji to copy and paste it.")
+        .label("Type to search · choose an emoji to paste")
         .xalign(0.0)
-        .css_classes(["dim-label"])
+        .css_classes(["hint"])
         .build();
     root.append(&status);
     window.set_child(Some(&root));
@@ -127,10 +136,7 @@ fn build_window(app: &Application, entries: Rc<Vec<Emoji>>) {
                 status.set_text("No matching emoji found.");
                 return;
             }
-            status.set_text(&format!(
-                "{} suggestions · Enter a word to narrow the list",
-                matches.len()
-            ));
+            status.set_text(&format!("{} matches", matches.len()));
             for item in matches {
                 let button = Button::with_label(&item.c);
                 button.set_tooltip_text(Some(&item.n));
@@ -148,7 +154,7 @@ fn build_window(app: &Application, entries: Rc<Vec<Emoji>>) {
                         });
                     }
                 });
-                results.insert(&button, -1);
+                results.append(&button);
             }
         }
     };
@@ -159,7 +165,7 @@ fn build_window(app: &Application, entries: Rc<Vec<Emoji>>) {
 
     let css = gtk::CssProvider::new();
     css.load_from_data(
-        "window { background: #171b24; color: #f1f3f8; } entry { padding: 10px 12px; border-radius: 13px; } .emoji-chip { min-width: 42px; min-height: 42px; font-size: 25px; border-radius: 13px; background: alpha(white, 0.09); } .emoji-chip:hover { background: alpha(#8bc9ff, 0.24); }",
+        "window { background: #121620; color: #f3f5f9; } .surface { padding: 9px 13px; border: 1px solid alpha(#b8d8ff, .21); border-radius: 22px; background: linear-gradient(125deg, alpha(#62b8ff, .17), alpha(#171d2a, .96) 38%, alpha(#9878ed, .14)); } .brand { color: alpha(white, .84); font-size: 16px; font-weight: 650; letter-spacing: -1px; padding: 0 4px; } .search-entry { min-height: 38px; padding: 0 12px; border: 1px solid alpha(white, .10); border-radius: 13px; background: alpha(white, .055); color: #f5f7fc; } .search-entry:focus { border-color: alpha(#8bc9ff, .75); } .emoji-chip { min-width: 46px; min-height: 44px; padding: 0; font-size: 25px; border: 1px solid alpha(white, .075); border-radius: 14px; background: alpha(white, .07); transition: 180ms ease; } .emoji-chip:hover { background: alpha(#8bc9ff, .22); border-color: alpha(#b7e0ff, .4); } .hint { color: alpha(white, .47); font-size: 11px; padding-left: 3px; } scrollbar { opacity: 0; }",
     );
     if let Some(display) = gdk::Display::default() {
         gtk::style_context_add_provider_for_display(
